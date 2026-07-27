@@ -1,0 +1,169 @@
+<div>
+    <section id="header">
+        <div>
+            <span>Tickets > {{ticket.id}}</span>
+            <h1>{{ticket.title}}</h1>
+            <span>Criado em {{ticket.createdAt}} | Atualizado em {{ticket.updatedAt}}</span>
+        </div>
+        <div id="header_buttons">
+            @if(myProfile == 'ATENDENTE'){
+                <app-button routerLink="/access/tickets" text="Voltar"/>
+                @if(ticket.responsible != null && ticket.status == 'EM_ANDAMENTO'){
+                    <app-button backgroundColor="red" (click)="useCloseTicket()" text="Fechar"/>
+                }
+                @if(ticket.responsible == null && ticket.status == 'ABERTO') {
+                    <app-button backgroundColor="green" (click)="useTakeTicket()"  text="Assumir"/>
+                }
+            }
+            @else {
+                <app-button routerLink="/access/profile" text="Voltar"/>
+            }
+        </div>
+    </section>
+    <mat-tab-group animationDuration="500ms">
+        <mat-tab label="Detalhes">
+            <section class="section_ticket_information">
+                <div class="section_ticket_information_1">
+                    <app-card class="card_big">
+                        <div class="card_content">
+                            <h2>Descrição</h2>
+                            <p>{{ticket.description}}</p>
+                        </div>
+                    </app-card>
+                    <app-card class="card_big">
+                        <div id="card_comment" class="card_content">
+                            <h2>Comentários</h2>
+                            <div id="card_comment_box">
+                                @if (comments.length > 0) {
+                                    @for (comment of comments; track $index) {
+                                        <div id="card_comment_box_user">
+                                            <img src="user-icon.png" alt="">
+                                            <div id="card_comment_box_user_message">
+                                                <div id="card_comment_box_user_message_header">
+                                                    <span>{{comment.author.name}}</span>
+                                                    <span>{{comment.createdAt}}</span>
+                                                </div>
+                                                <span>{{comment.text}}</span>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                @else {
+                                    <span>Sem comentários</span>
+                                }
+                            </div><br>
+                            <div id="comment_input_section">
+                                <app-input [control]="commentForm.controls.text"placeholder="Escreva um comentário"/>
+                                <app-button (click)="useCreateComment(commentForm.getRawValue())" text="Enviar"/>
+                            </div>
+                        </div>
+                    </app-card>
+                </div>
+                <div class="section_ticket_information_2">
+                    <app-card class="card_small">
+                        <div class="card_content">
+                            <h2>Informações do Ticket</h2>
+                            <div id="card_content_separator">
+                                <div>
+                                    <p>ID</p>
+                                    <p>Prioridade</p>
+                                    <p>Status</p>
+                                    <p>Categoria</p>
+                                </div>
+                                <div>
+                                    <p>{{ticket.id}}</p>
+                                    <p>{{ticket.priority}}</p>
+                                    <p>{{ticket.status}}</p>
+                                    <p>{{ticket.category}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </app-card>
+                    <app-card class="card_small">
+                        <div id="card_people" class="card_content">
+                            <h2>Partes Envolvidas</h2>
+                            <div id="card_people_users">
+                                <div class="card_people_data_all">
+                                    <img src="user-icon.png" alt="">
+                                    <div class="card_people_data">
+                                        <span>SOLICITANTE</span>
+                                        <span>{{ticket.requester.name}}</span>
+                                        <span>{{ticket.requester.email}}</span>
+                                    </div>
+                                </div>
+                                @if (ticket.responsible != null) {
+                                    <div class="card_people_data_all">
+                                        <img src="user-icon.png" alt="">
+                                        <div class="card_people_data">
+                                            <span>ATENDENTE</span>
+                                            <span>{{ticket.responsible.name}}</span>
+                                            <span>{{ticket.responsible.email}}</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </app-card>
+                </div>
+            </section>
+        </mat-tab>
+        <mat-tab label="Anexos">
+             <section class="section_ticket_information">
+                <div class="section_ticket_information_1">
+                    <app-card class="card_big">
+                       <div class="card_content">
+                           <h2>Anexos</h2>
+                           <app-attachment-upload [ticketId]="getTicketID()"/>
+                       </div>
+                    </app-card>
+                </div>
+                 <div class="section_ticket_information_2">
+                    <app-card class="card_small">
+                        <div class="card_content">
+                            <h2>Informações do Ticket</h2>
+                            <div id="card_content_separator">
+                                <div>
+                                    <p>ID</p>
+                                    <p>Prioridade</p>
+                                    <p>Status</p>
+                                    <p>Categoria</p>
+                                </div>
+                                <div>
+                                    <p>{{ticket.id}}</p>
+                                    <p>{{ticket.priority}}</p>
+                                    <p>{{ticket.status}}</p>
+                                    <p>{{ticket.category}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </app-card>
+                    <app-card class="card_small">
+                        <div id="card_people" class="card_content">
+                            <h2>Partes Envolvidas</h2>
+                            <div id="card_people_users">
+                                <div class="card_people_data_all">
+                                    <img src="user-icon.png" alt="">
+                                    <div class="card_people_data">
+                                        <span>SOLICITANTE</span>
+                                        <span>{{ticket.requester.name}}</span>
+                                        <span>{{ticket.requester.email}}</span>
+                                    </div>
+                                </div>
+                                @if (ticket.responsible != null) {
+                                    <div class="card_people_data_all">
+                                        <img src="user-icon.png" alt="">
+                                        <div class="card_people_data">
+                                            <span>ATENDENTE</span>
+                                            <span>{{ticket.responsible.name}}</span>
+                                            <span>{{ticket.responsible.email}}</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </app-card>
+                </div>
+             </section>
+        </mat-tab>
+    </mat-tab-group>
+</div>

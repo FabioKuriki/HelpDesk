@@ -1,0 +1,61 @@
+section{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    height: 100vh;
+}
+
+#left_side, #right_side{
+    padding-left: 3vw;
+}
+
+#left_side{
+    display: flex;
+    width: 50vw;
+    height: 100vh;
+    background-color: #0E2645;
+}
+
+#left_side_content{
+    width: 100vw;
+    padding: 10%;
+    color: white;
+}
+
+#img_logo{
+    width: 15vw;
+}
+
+#img_login{
+    width: 32vw;
+    height: 45vh;
+}
+
+#right_side{
+    display: flex;
+    width: 50vw;
+    height: 100vh;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+}
+
+#right_side_content{
+    padding-left: 20%;
+}
+
+
+.centered_div{
+    display: flex;
+    justify-content: center;
+}
+
+.centered_text{
+    text-align: center;
+}
+
+a{
+    color: #349CDD;
+    text-decoration: none;
+}

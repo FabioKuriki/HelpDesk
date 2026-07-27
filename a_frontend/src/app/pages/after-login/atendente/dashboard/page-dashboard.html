@@ -1,0 +1,26 @@
+
+<div id="dashboard_content">
+    <h1>Olá {{user.name}}!</h1>
+    <p>Aqui está o panorama dos tickets nos quais você é responsável</p>
+    <div id="section_kpi">
+        <app-kpi title="Tempo médio de Resolução" value="0" src="time-icon.png" backgroundColor="#0004FF35"/>
+        <app-kpi title="Urgentes" [value]="countUrgentTickets" src="urgente-icon.png" backgroundColor="#FF000035"/>
+        <app-kpi title="Abertos Hoje" [value]="countOpenTickets" backgroundColor="#6FC90035" src="ticket-icon-green.png"/>
+        <app-kpi title="Em Andamento" [value]="countRunningTickets" backgroundColor="#ead11435" src="em-andamento-icon.png"/>
+    </div><br>
+    <div id="section_graph">
+        <app-card>
+            <apx-chart id="chart_area" [title]="chartArea.title" [series]="chartArea.series" 
+            [chart]="chartArea.chart" [xaxis]="chartArea.xaxis" />
+        </app-card>
+        <app-card>
+            <apx-chart id="chart_donut" [title]="chartDonut.title" [series]="chartDonut.series" 
+            [chart]="chartDonut.chart" [plotOptions]="chartDonut.plotOptions" [legend]="chartDonut.legend"
+            [labels]="chartDonut.labels" [dataLabels]="chartDonut.dataLabels" />
+        </app-card>
+        <app-card>
+            <apx-chart #chartBar1 id="chart_bar" [title]="chartBar.title" [series]="chartBar.series" 
+            [xaxis]="chartBar.xaxis" [chart]="chartBar.chart" [plotOptions]="chartBar.plotOptions" />
+        </app-card>
+    </div>
+</div>

@@ -1,0 +1,30 @@
+<section>
+    <div id="left_side">
+        <div id="left_side_content">
+            <img id="img_logo" src="logo.png" alt="">
+            <img id="img_login" src="login.png" alt="imagem de login">
+            <h1>Solução completa para um suporte eficiente</h1>
+            <p>Organize, priorize e resolva com praticidade</p>
+        </div>
+    </div>
+    <div id="right_side">
+        <div id="right_side_content">
+            <h1>Bem-vindo de volta!</h1>
+            <p>Faça login para continuar<p>
+            <form [formGroup]="loginForm" (ngSubmit)="useLogin(loginForm.getRawValue())">
+                <app-input [control]="loginForm.controls.email" type="email" placeholder="E-mail"/><br><br>
+                <app-input [control]="loginForm.controls.password" type="password" placeholder="Senha"/><br><br>
+                
+                <div class="centered_div">
+                    <app-button type="submit" text="Login"/>
+                </div>
+                <br>
+            </form>
+            
+            <hr/>
+
+            <p class="centered_text">Não tem uma conta? <a href="sign-up">Cadastre-se</a></p>
+        </div>
+    </div>
+</section>
+

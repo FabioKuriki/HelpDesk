@@ -1,0 +1,14 @@
+#header{
+    /* background-color: #efeded; */
+    background-color: #0e2645;
+    color: white;
+}
+
+tr{
+    cursor: pointer;
+    transition: 0.5s;
+}
+
+tr:hover{
+    background-color: #dfdede;
+}

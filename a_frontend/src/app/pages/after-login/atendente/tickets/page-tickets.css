@@ -1,0 +1,30 @@
+#ticket_container{
+    padding: 24px;
+    padding-bottom: 40px;
+}
+
+#section_1{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+app-list-filter{
+    padding-left: 1vw;
+}
+
+.counter{
+    margin-left: 1vw;
+    background-color: #349CDD;
+    border-radius: 100%;
+    width: 24px;
+    height: 24px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.margin_top{
+    margin-top: 2vh;
+}

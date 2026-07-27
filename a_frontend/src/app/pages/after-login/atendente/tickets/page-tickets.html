@@ -1,0 +1,53 @@
+<div id="ticket_container">
+    <div id="section_1">
+        <div>
+            <h1>Gerenciar Tickets</h1>
+            <p>Visualize e gerencie os tickets abertos no sistema</p>
+        </div>
+        <app-button (click)="openDialog()" text="+ Novo Ticket"/>
+    </div>
+    <div>
+        <app-card id="section_2">
+            <br>
+            @if (currentDataSource) {
+            <app-list-filter
+                [dataSource]="currentDataSource">
+            </app-list-filter>
+            }
+        </app-card>
+    </div><br>
+    <mat-tab-group (selectedTabChange)="onTabChange($event)">
+        <mat-tab> 
+            <ng-template mat-tab-label>
+                Disponíveis para assumir
+                <span class="counter">{{ tickets.length }}</span>
+            </ng-template>
+            <div class="margin_top">
+                <app-card>
+                    <app-table [columns]="columnsAvailable" [dataSource]="ticketsDataSource" [pageSizeOptions]="[5, 10, 20]"/>
+                </app-card>
+            </div>
+        </mat-tab>
+        <mat-tab>
+            <ng-template mat-tab-label>
+                Atríuidos a mim
+                <span class="counter">{{ myTickets.length }}</span>
+            </ng-template>
+            <div class="margin_top">
+                <app-card>
+                    <app-table [columns]="columnsResponsible" [dataSource]="myTicketsDataSource" [pageSizeOptions]="[5, 10, 20]"/>
+                </app-card>
+            </div>
+        </mat-tab>
+        <mat-tab>
+            <ng-template mat-tab-label>
+                Finalizados
+            </ng-template>
+            <div class="margin_top">
+                <app-card>
+                    <app-table [columns]="columnsClosed" [dataSource]="ticketsClosedDataSource" [pageSizeOptions]="[5, 10, 20]"/>
+                </app-card>
+            </div>
+        </mat-tab>
+    </mat-tab-group>
+</div>

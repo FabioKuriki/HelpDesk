@@ -1,0 +1,41 @@
+
+<div id="profile_container">
+    <app-card>
+        <div id="profile_content">
+            <div id="profile_content_user">
+                <img src="user-icon.png" alt="">
+                <div>
+                    <h2>{{user.name}}</h2>
+                    <p>{{user.email}}</p>
+                    <p id="created_at">Membro desde {{user.createdAt}}</p>
+                </div>
+            </div>
+            <div id="profile_content_button">
+                <app-button (click)="openDialogEditUser()" text="Editar"/>
+                <app-button (click)="removeAccount()" backgroundColor="red" text="Excluir"/>
+            </div>
+        </div>
+    </app-card><br>
+    <div id="all_card_status">
+        <app-kpi title="Abertos Hoje" [value]="countOpenTickets" backgroundColor="#349cdd35" src="ticket-open-icon.png"/>
+        <app-kpi title="Em Andamento" [value]="countRunningTickets" backgroundColor="#ead11435" src="em-andamento-icon.png"/>
+        <app-kpi title="Resolvido" [value]="countSolvedTickets" backgroundColor="#6fc90035" src="resolvido-icon.png"/>
+    </div><br>
+    <div>
+        <div id="title_and_filter">
+            <div>
+                <h1>Tickets criados</h1>
+                <p>Gerencie e acompanhe suas solicitações</p>
+            </div>
+            <div id="button_and_filter">
+                @if (user.profile == 'SOLICITANTE') {
+                    <app-button (click)="openDialogAddTicket()" text="+ Novo Ticket"/>
+                }
+                <app-list-filter [dataSource]="dataSource"/>
+            </div>
+        </div>
+        <app-card>
+            <app-table [columns]="columnsRequester" [dataSource]="dataSource" [pageSizeOptions]="[3, 6, 9]"/>
+        </app-card>
+    </div>
+</div>

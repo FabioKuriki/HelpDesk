@@ -1,0 +1,6 @@
+<select [formControl]="control">
+    <option value="" selected disabled>{{placeholder}}</option>
+    @for (item of items; track $index) {
+        <option [value]="item">{{item}}</option>
+    }
+</select>

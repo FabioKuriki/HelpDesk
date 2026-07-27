@@ -1,0 +1,663 @@
+# ESPECIFICAÇÃO TÉCNICA - HELPDESK FRONTEND
+
+## 1. PROPÓSITO E ESCOPO
+
+Este documento define os contratos técnicos da camada de frontend do sistema HelpDesk, de forma agnóstica a linguagem, framework ou biblioteca de UI.
+
+Ele complementa a especificação do backend já existente e descreve o comportamento esperado da interface, navegação, formulários, componentes reutilizáveis, gerenciamento de sessão, permissões de visualização e integração com os contratos expostos pela API.
+
+---
+
+## 2. VISÃO GERAL DA INTERFACE
+
+### 2.1 Objetivo do Frontend
+Permitir que usuários autenticados e não autenticados interajam com o sistema de helpdesk por meio de uma interface responsiva, consistente e orientada a tarefas, cobrindo:
+
+- Autenticação e cadastro
+- Visualização do painel principal
+- Listagem e inspeção de tickets
+- Criação e edição de tickets e dados de usuário
+- Comentários e anexos em tickets
+- Feedback visual para sucesso, erro e confirmação
+
+### 2.2 Atores Principais
+- **VISITANTE**: acessa login e cadastro
+- **SOLICITANTE**: cria e acompanha tickets próprios
+- **ATENDENTE**: assume, acompanha e resolve tickets
+- **ADMINISTRADOR**: acessa tudo e executa ações administrativas
+
+### 2.3 Áreas Funcionais
+- Área pública: login e cadastro
+- Área autenticada: sidebar, dashboard, tickets, perfil e detalhe de ticket
+- Componentes compartilhados: botões, cards, inputs, tabela, filtros, KPI, diálogos e upload
+
+---
+
+## 3. ENTIDADES E ESTADOS DE UI
+
+### 3.1 Entidades Principais
+- SessionCredential: credencial de sessão autenticada
+- LoggedUser: usuário autenticado carregado na UI
+- TicketViewModel: representação do ticket para listagem e detalhe
+- CommentViewModel: representação do comentário em tela
+- AttachmentViewModel: metadados do anexo em tela
+- FormState: estado de formulário reativo ou equivalente
+- UiFeedback: mensagens de sucesso, erro, alerta e confirmação
+
+### 3.2 Estados Globais da Interface
+- Não autenticado
+- Autenticando
+- Autenticado
+- Carregando dados
+- Em erro
+- Sem permissão
+- Operação concluída com sucesso
+
+### 3.3 Invariantes Globais da UI
+- A área autenticada nunca deve ser exibida sem credencial válida
+- Campos sensíveis nunca devem ser expostos em texto plano
+- A interface deve manter coerência visual entre estados vazios, carregando e erro
+- A navegação deve respeitar as permissões do papel do usuário
+- A UI nunca deve depender de uma tecnologia específica para manter seus contratos funcionais
+
+---
+
+## 4. CONTRATOS TRANSVERSAIS DO FRONTEND
+
+### 4.1 Contrato: BootApplication
+**Função**: Inicializar a aplicação e preparar navegação, clientes HTTP e componentes globais.
+
+#### Pré-condições
+- Ambiente de execução disponível
+- Configuração de rotas carregada
+- Endereço do backend configurado
+
+#### Pós-condições
+- Aplicação inicializada sem erro fatal
+- Roteamento disponível
+- Serviços globais prontos para uso
+
+#### Invariantes
+- A aplicação deve sempre iniciar em um estado navegável
+- Erros de bootstrap devem ser tratados por feedback adequado
+
+#### Exceções
+- Falha de configuração: aplicação não inicia
+- Falha de rede inicial: a UI deve permanecer funcional para páginas públicas quando possível
+
+### 4.2 Contrato: AuthenticateSession
+**Função**: Manter a sessão autenticada entre requisições e navegações.
+
+#### Pré-condições
+- Usuário autenticado previamente
+- Credencial de sessão disponível no cliente ou no mecanismo adotado pela implementação
+
+#### Pós-condições
+- Requisições autenticadas podem ser executadas
+- Usuário pode acessar a área protegida
+
+#### Invariantes
+- A credencial não deve ser manipulada pela UI além do necessário para transporte
+- Sessões inválidas devem resultar em retorno à área pública
+
+#### Exceções
+- Credencial ausente: redirecionar para login
+- Credencial expirada: redirecionar para login e notificar o usuário
+
+### 4.3 Contrato: Logout
+**Função**: Encerrar a sessão e devolver o usuário à área pública.
+
+#### Pré-condições
+- Usuário autenticado
+
+#### Pós-condições
+- Sessão encerrada
+- Dados sensíveis da UI descartados
+- Navegação retornada ao login
+
+#### Invariantes
+- Logout deve limpar o contexto local de usuário
+- Após logout, nenhuma tela protegida deve permanecer acessível sem nova autenticação
+
+#### Exceções
+- Falha ao encerrar sessão no servidor: a UI ainda deve encerrar o contexto local e orientar o usuário
+
+---
+
+## 5. CONTRATOS DE NAVEGAÇÃO E ROTAS
+
+### 5.1 Contrato: PublicRoutes
+**Função**: Disponibilizar login e cadastro.
+
+#### Pré-condições
+- Usuário não autenticado ou acessando por fluxo público permitido
+
+#### Pós-condições
+- Acesso às telas públicas conforme rota solicitada
+
+#### Invariantes
+- Telas públicas não devem exigir dados privados do usuário
+
+#### Exceções
+- Rota inexistente: apresentar estado de não encontrado ou redirecionamento consistente
+
+### 5.2 Contrato: ProtectedArea
+**Função**: Abrigar o conjunto de telas disponíveis ao usuário autenticado.
+
+#### Pré-condições
+- Credencial válida
+
+#### Pós-condições
+- Sidebar e navegação protegida disponíveis
+- Conteúdo interno carregado dentro do shell autenticado
+
+#### Invariantes
+- A área protegida não deve ser acessada sem autenticação
+- O layout principal deve permanecer consistente entre subrotas
+
+#### Exceções
+- Acesso sem autenticação: redirecionar para login
+
+---
+
+## 6. CONTRATOS DAS TELAS PÚBLICAS
+
+### 6.1 Contrato: LoginPage
+**Função**: Coletar credenciais e autenticar o usuário.
+
+#### Pré-condições
+- Usuário não autenticado ou autenticado buscando novo acesso
+- Email e senha devem ser informados
+
+#### Pós-condições
+- Em sucesso: usuário autenticado e redirecionado para a área protegida
+- Em falha: mensagem clara de erro apresentada
+
+#### Invariantes
+- O formulário deve preservar o estado digitado até confirmação ou limpeza explícita
+- Senha nunca deve ser exibida em claro
+
+#### Exceções
+- Credenciais inválidas: informar falha de autenticação
+- Campos vazios: impedir submissão ou exibir validação
+
+### 6.2 Contrato: SignUpPage
+**Função**: Coletar dados para cadastro de usuário.
+
+#### Pré-condições
+- Usuário não autenticado
+- Nome, email, senha e perfil devem estar disponíveis no formulário
+
+#### Pós-condições
+- Em sucesso: conta criada e confirmação exibida
+- Em falha: feedback de validação ou negócio exibido
+
+#### Invariantes
+- O perfil padrão deve refletir a regra de negócio da aplicação
+- O formulário não deve permitir submissão com dados inválidos
+
+#### Exceções
+- Email duplicado: exibir erro apropriado
+- Senha fraca ou inválida: exibir erro apropriado
+
+### 6.3 Contrato: RouteFallback
+**Função**: Tratar acessos a rotas inexistentes ou inválidas.
+
+#### Pré-condições
+- URL não mapeada
+
+#### Pós-condições
+- Usuário recebe feedback consistente de rota inválida
+
+#### Invariantes
+- Rotas inválidas não devem quebrar a aplicação
+
+#### Exceções
+- Erro de navegação: manter a UI em estado estável
+
+---
+
+## 7. CONTRATOS DA ÁREA AUTENTICADA
+
+### 7.1 Contrato: AccessShell
+**Função**: Fornecer estrutura base para navegação interna com sidebar e área de conteúdo.
+
+#### Pré-condições
+- Usuário autenticado
+
+#### Pós-condições
+- Sidebar disponível
+- Conteúdo da subrota renderizado
+
+#### Invariantes
+- O shell deve permanecer responsivo em desktop e mobile
+- A identidade visual deve ser preservada entre subpáginas
+
+#### Exceções
+- Falha de carregamento do usuário logado: a interface deve degradar de forma controlada
+
+### 7.2 Contrato: Sidebar
+**Função**: Exibir navegação principal da área autenticada.
+
+#### Pré-condições
+- Usuário autenticado
+- Perfil do usuário disponível ou em carregamento
+
+#### Pós-condições
+- Navegação visível conforme permissões e contexto
+- Estado expandido/recolhido alternável
+
+#### Invariantes
+- A sidebar deve respeitar o contexto de dispositivo
+- A navegação deve manter consistência com o papel do usuário
+
+#### Exceções
+- Perfil indisponível: a navegação deve permanecer funcional com fallback seguro
+
+### 7.3 Contrato: MobileNavigation
+**Função**: Adaptar a navegação em telas pequenas.
+
+#### Pré-condições
+- Largura de viewport compatível com layout móvel
+
+#### Pós-condições
+- Navegação ajustada para uso em dispositivos pequenos
+
+#### Invariantes
+- A usabilidade em mobile não pode remover funcionalidades críticas
+
+#### Exceções
+- Mudança de viewport em tempo de execução deve ser tratada sem perder estado essencial
+
+---
+
+## 8. CONTRATOS DAS TELAS PRINCIPAIS
+
+### 8.1 Contrato: DashboardPage
+**Função**: Exibir KPIs e gráficos resumidos do atendimento.
+
+#### Pré-condições
+- Usuário autenticado
+- Usuário com permissão para visualizar os dados do painel
+
+#### Pós-condições
+- KPIs carregados
+- Gráficos configurados com os dados recebidos
+- Resumo operacional exibido
+
+#### Invariantes
+- Os indicadores devem refletir dados atualizados da sessão corrente ou do período consultado
+- A ausência de dados não deve quebrar a visualização
+
+#### Exceções
+- Falha ao carregar dados: exibir estado vazio ou mensagem apropriada
+- Falha parcial em gráfico: manter os demais widgets operacionais
+
+### 8.2 Contrato: TicketsPage
+**Função**: Listar tickets e permitir navegação entre visões associadas.
+
+#### Pré-condições
+- Usuário autenticado
+
+#### Pós-condições
+- Tickets carregados em tabela
+- Visões alternativas disponíveis conforme papel e contexto
+- Ação de criação de ticket acessível quando permitido
+
+#### Invariantes
+- A listagem deve refletir os filtros e o escopo do usuário
+- Os dados exibidos não devem violar permissões de leitura
+
+#### Exceções
+- Falha no carregamento: apresentar tabela vazia com feedback
+
+### 8.3 Contrato: ProfilePage
+**Função**: Exibir dados do usuário autenticado, métricas pessoais e tickets relacionados.
+
+#### Pré-condições
+- Usuário autenticado
+
+#### Pós-condições
+- Dados pessoais exibidos
+- Contadores pessoais carregados
+- Lista de tickets associados ao usuário carregada
+
+#### Invariantes
+- O usuário só deve ver seus próprios dados e relações permitidas
+- A tela de perfil não deve expor campos sensíveis em claro
+
+#### Exceções
+- Erro ao carregar dados: manter o restante da página utilizável quando possível
+
+### 8.4 Contrato: TicketDetailPage
+**Função**: Exibir o ticket selecionado, seus comentários, anexos e ações permitidas.
+
+#### Pré-condições
+- Usuário autenticado
+- Identificador do ticket presente na rota
+- Usuário com permissão de leitura no ticket
+
+#### Pós-condições
+- Ticket carregado
+- Comentários carregados
+- Anexos carregados
+- Ações disponíveis conforme estado do ticket e papel do usuário
+
+#### Invariantes
+- O ticket detalhado não pode ser alterado por componentes que não respeitem permissões
+- Comentários e anexos devem permanecer associados ao ticket correto
+
+#### Exceções
+- Ticket inexistente: exibir erro de não encontrado
+- Sem permissão: bloquear visualização e orientar o usuário
+
+---
+
+## 9. CONTRATOS DE FORMULÁRIOS E DIÁLOGOS
+
+### 9.1 Contrato: DialogAddTicket
+**Função**: Coletar dados para criação de ticket.
+
+#### Pré-condições
+- Usuário autenticado com permissão para criar ticket
+- Campos de título, descrição, categoria e prioridade disponíveis
+
+#### Pós-condições
+- Ticket enviado para persistência
+- Diálogo pode permanecer aberto ou ser encerrado conforme o fluxo adotado
+
+#### Invariantes
+- Título e descrição devem ser obrigatórios
+- Categoria e prioridade devem respeitar os valores válidos
+
+#### Exceções
+- Falha de validação: impedir envio
+- Falha de persistência: exibir erro e preservar os dados digitados
+
+### 9.2 Contrato: DialogEditUser
+**Função**: Permitir edição dos dados do usuário autenticado.
+
+#### Pré-condições
+- Usuário autenticado
+- Dados atuais do usuário carregados para edição
+
+#### Pós-condições
+- Alterações enviadas para atualização
+- Dados refletidos na UI após sucesso
+
+#### Invariantes
+- Campos imutáveis não devem ser editáveis na interface
+- Senha deve ser tratada como dado sensível
+
+#### Exceções
+- Falha na atualização: informar o usuário e preservar o estado do formulário
+
+### 9.3 Contrato: DialogTemplate
+**Função**: Padronizar a apresentação visual de diálogos.
+
+#### Pré-condições
+- Conteúdo de diálogo fornecido pelo chamador
+
+#### Pós-condições
+- Estrutura visual consistente
+- Ações primárias e secundárias posicionadas de forma previsível
+
+#### Invariantes
+- O template não deve impor regra de negócio própria
+- Deve permanecer reutilizável para diferentes fluxos
+
+#### Exceções
+- Falha de conteúdo: mostrar fallback neutro ou fechar com segurança
+
+---
+
+## 10. CONTRATOS DOS COMPONENTES REUTILIZÁVEIS
+
+### 10.1 Contrato: Button
+**Função**: Executar ações primárias ou secundárias da interface.
+
+#### Pré-condições
+- Rótulo ou conteúdo de ação definido
+
+#### Pós-condições
+- Ação disparada quando acionado
+
+#### Invariantes
+- Botões de mesma hierarquia devem manter comportamento visual coerente
+- Botões desabilitados não devem disparar ação
+
+#### Exceções
+- Ação indisponível: feedback visual claro
+
+### 10.2 Contrato: Card
+**Função**: Agrupar informações relacionadas.
+
+#### Pré-condições
+- Conteúdo estrutural disponível
+
+#### Pós-condições
+- Informação apresentada em bloco coerente
+
+#### Invariantes
+- O card não deve ocultar dados essenciais sem justificativa
+
+#### Exceções
+- Conteúdo ausente: exibir estado vazio
+
+### 10.3 Contrato: Table
+**Função**: Exibir coleções tabulares com colunas e ações.
+
+#### Pré-condições
+- Dataset e definição de colunas fornecidos
+
+#### Pós-condições
+- Linhas renderizadas conforme fonte de dados
+- Ordenação e paginação aplicadas quando disponíveis
+
+#### Invariantes
+- Tabelas devem preservar consistência entre colunas e registros
+- Dados sensíveis não devem ser renderizados sem permissão
+
+#### Exceções
+- Dataset vazio: exibir estado sem registros
+
+### 10.4 Contrato: ListFilter
+**Função**: Filtrar coleções conforme critérios de interface.
+
+#### Pré-condições
+- Opções de filtro disponíveis
+
+#### Pós-condições
+- Lista filtrada conforme seleção do usuário
+
+#### Invariantes
+- Filtros devem refletir apenas critérios permitidos
+
+#### Exceções
+- Filtro inválido: ignorar ou sinalizar de forma segura
+
+### 10.5 Contrato: InputBar, InputTextArea e InputSelect
+**Função**: Capturar entrada estruturada de dados.
+
+#### Pré-condições
+- Campo configurado com rótulo, estado e validação
+
+#### Pós-condições
+- Valor capturado com coerência com o tipo esperado
+
+#### Invariantes
+- A interface deve impedir ou sinalizar entrada inválida
+- Textareas e selects devem manter acessibilidade adequada
+
+#### Exceções
+- Valor incompatível: bloquear submissão ou exibir mensagem de validação
+
+### 10.6 Contrato: Kpi
+**Função**: Exibir indicadores resumidos.
+
+#### Pré-condições
+- Valor numérico ou métrica derivada disponível
+
+#### Pós-condições
+- Indicador renderizado com legenda, título ou valor
+
+#### Invariantes
+- KPIs devem ser consistentes com a origem dos dados
+
+#### Exceções
+- Dado ausente: usar estado neutro ou placeholder
+
+---
+
+## 11. CONTRATOS DE ANEXOS
+
+### 11.1 Contrato: AttachmentUpload
+**Função**: Permitir envio, listagem, visualização e exclusão de anexos de um ticket.
+
+#### Pré-condições
+- Usuário autenticado
+- Identificador do ticket presente
+- Usuário com permissão no ticket
+- Arquivos válidos selecionados ou arrastados
+
+#### Pós-condições
+- Anexos enviados para persistência
+- Lista atualizada após upload ou exclusão
+- Preview disponibilizado quando aplicável
+
+#### Invariantes
+- O anexo sempre deve permanecer vinculado ao ticket correto
+- O tamanho e o tipo do arquivo devem respeitar as regras de negócio
+- A UI não deve permitir upload sem permissão
+
+#### Exceções
+- Arquivo ausente: não executar upload
+- Arquivo inválido, grande demais ou não suportado: exibir erro
+- Falha de download ou preview: exibir fallback seguro
+- Falha ao excluir: manter o item na lista e notificar o usuário
+
+### 11.2 Contrato: AttachmentPreview
+**Função**: Exibir pré-visualização de anexos suportados.
+
+#### Pré-condições
+- Anexo selecionado
+- Tipo de conteúdo compatível com preview
+
+#### Pós-condições
+- Preview exibido ou download preparado
+
+#### Invariantes
+- A visualização não deve alterar o arquivo original
+
+#### Exceções
+- Tipo não pré-visualizável: oferecer apenas download ou metadados
+
+---
+
+## 12. REGRAS DE NEGÓCIO DA INTERFACE
+
+### 12.1 Regra: Visibilidade por Papel
+- SOLICITANTE vê seus tickets, perfil e ações permitidas em seus tickets
+- ATENDENTE vê a operação de atendimento e seus tickets relacionados
+- ADMINISTRADOR vê tudo o que os demais veem, além de controles administrativos
+
+### 12.2 Regra: Consistência de Estado
+- Após criar, editar, assumir, comentar, anexar ou fechar um ticket, a tela deve atualizar o estado local para refletir o novo dado persistido
+- Não é permitido manter listas ou detalhes visivelmente defasados após uma operação bem-sucedida
+
+### 12.3 Regra: Feedback ao Usuário
+- Toda operação relevante deve gerar feedback visual
+- Sucesso, erro, aviso e confirmação devem ser distinguíveis
+
+### 12.4 Regra: Responsividade
+- A interface deve operar adequadamente em desktop e mobile
+- Elementos de navegação e tabela devem degradar de forma legível em telas menores
+
+### 12.5 Regra: Estados Vazios
+- Telas sem dados devem mostrar estado vazio claro
+- Estado vazio não é erro
+
+### 12.6 Regra: Proteção de Dados
+- Informações sensíveis não devem aparecer sem necessidade funcional
+- Senhas nunca devem ser renderizadas, persistidas na UI ou logadas
+
+---
+
+## 13. VALIDAÇÕES E RESTRIÇÕES DE UI
+
+### 13.1 Validações de Login e Cadastro
+- Email deve respeitar formato válido
+- Senha deve respeitar as regras de complexidade definidas pelo backend
+- Campos obrigatórios não podem ser vazios
+
+### 13.2 Validações de Ticket
+- Título deve ser obrigatório e limitado em tamanho
+- Descrição deve ser obrigatória e limitada em tamanho
+- Categoria e prioridade devem ser valores válidos
+
+### 13.3 Validações de Comentário
+- Texto deve ser obrigatório e limitado em tamanho
+- Comentário não deve ser enviado para tickets que a regra de negócio proíbe
+
+### 13.4 Validações de Anexo
+- Arquivo deve existir
+- Tamanho deve respeitar o limite definido
+- Tipo de arquivo deve ser permitido
+
+---
+
+## 14. MATRIZ DE ERROS DE INTERFACE
+
+| Tipo | Cenário | Comportamento Esperado |
+|------|---------|------------------------|
+| AUTH-001 | Sessão ausente ou expirada | Redirecionar para login |
+| AUTH-002 | Credenciais inválidas | Exibir mensagem de autenticação falhou |
+| UI-001 | Dados não carregados | Exibir estado de carregamento ou vazio |
+| UI-002 | Recurso não encontrado | Exibir mensagem de não encontrado |
+| UI-003 | Sem permissão | Bloquear a ação e informar o usuário |
+| UI-004 | Validação de formulário falhou | Impedir submissão e destacar campos |
+| UI-005 | Falha de rede | Exibir erro recuperável e permitir nova tentativa |
+| UI-006 | Upload inválido | Informar tipo, tamanho ou ausência do arquivo |
+
+---
+
+## 15. CENÁRIOS DE USO PRINCIPAIS
+
+### 15.1 Fluxo: Autenticar e Entrar
+1. O usuário acessa a tela de login
+2. Informa credenciais válidas
+3. A UI envia a requisição de autenticação
+4. Em sucesso, o usuário é redirecionado para a área autenticada
+
+### 15.2 Fluxo: Criar Ticket
+1. O usuário autenticado acessa a listagem ou o perfil
+2. Abre o diálogo de criação de ticket
+3. Informa título, descrição, categoria e prioridade
+4. A UI envia os dados e atualiza a lista ao final
+
+### 15.3 Fluxo: Operar Ticket
+1. O usuário abre o detalhe de um ticket
+2. Visualiza comentários e anexos
+3. Se permitido, comenta, assume, fecha ou anexa arquivos
+4. A UI reflete o novo estado após cada operação bem-sucedida
+
+### 15.4 Fluxo: Gerenciar Perfil
+1. O usuário acessa a página de perfil
+2. Visualiza seus dados e métricas pessoais
+3. Se desejar, abre edição ou exclui a conta conforme permissão
+4. A interface atualiza o contexto local após a operação
+
+---
+
+## 16. CONCLUSÃO
+
+Esta especificação define os contratos de frontend do sistema HelpDesk de forma agnóstica a linguagem e framework, cobrindo navegação, telas públicas, área autenticada, formulários, componentes compartilhados, anexos e feedback visual.
+
+O modelo Design by Contract garante que a interface mantenha:
+
+- Pré-condições claras para cada interação
+- Pós-condições verificáveis após cada ação
+- Invariantes de segurança, consistência e usabilidade
+- Exceções tratadas de forma previsível e comunicável ao usuário
+
+---

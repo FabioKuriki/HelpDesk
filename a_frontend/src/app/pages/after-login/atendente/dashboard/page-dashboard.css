@@ -1,0 +1,18 @@
+#dashboard_content{
+  padding: 24px;
+}
+
+#section_kpi{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#section_graph{
+    display: flex;
+    justify-content: space-between;
+}
+
+app-card{
+    width: 30vw
+}

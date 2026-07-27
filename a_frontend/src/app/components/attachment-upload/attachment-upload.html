@@ -1,0 +1,73 @@
+<div id="container">
+    <div 
+        class="drop_zone"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        [class.dragging]="isDragging"
+    >
+        <p>
+            @if (isDragging) {
+                Solte os arquivos aqui
+            } @else {
+                Arraste arquivos aqui ou clique em selecionar
+            }
+        </p>
+        <input
+            #fileInput
+            hidden
+            type="file"
+            multiple
+            (change)="onFileSelected($event)"
+        >
+        <div>
+            <app-button text="Selecionar" (click)="fileInput.click()"/>
+        </div>
+    </div>
+    <div class="attachment_list">
+        @for (attachment of attachments; track attachment.id) {
+            <br>
+            <div class="attachment_item">
+                <span>
+                    📄
+                </span>
+                <div class="attachment_item_name_size">
+                    <div>
+                        {{ attachment.fileName }}
+                    </div>
+    
+                    <div>
+                        {{ formatSize(attachment.fileSize) }}
+                    </div>
+                </div>
+                <div class="attachment_item_buttons">
+                    <app-button text="Visualizar" (click)="openPreview(attachment)"/>
+                    <app-button text="✕" (click)="useDelete(attachment.id)"/>
+                </div>
+            </div>
+            @if (selectedAttachment?.id == attachment.id) {
+                <div class="preview">
+                    <h3>
+                        {{ attachment.fileName }}
+                    </h3>
+                    @if (previewUrl) {
+
+                        <img
+                            [src]="previewUrl"
+                            alt="Preview">
+
+                    } @else {
+
+                        <p>
+                            Não existe preview para este tipo de arquivo.
+                        </p>
+
+                    }
+                    <div>
+                        <app-button text="Fechar" (click)="closePreview()"/>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

@@ -1,0 +1,306 @@
+# ESPECIFICAÇÃO FUNCIONAL - HELPDESK
+
+## 1. OBJETIVO
+
+Esta especificação descreve o comportamento funcional esperado do sistema HelpDesk, de forma agnóstica a tecnologia, linguagem ou framework. O documento consolida as necessidades do produto a partir das capacidades de backend e frontend já definidas e organiza o que o sistema deve fazer do ponto de vista do negócio e da experiência do usuário.
+
+---
+
+## 2. ESCOPO
+
+O sistema deve permitir que usuários solicitem suporte, acompanhem a evolução dos tickets e interajam com atendentes por meio de comentários e anexos. O atendimento deve ser controlado por perfis de acesso, regras de transição de status e visibilidade dos dados.
+
+O escopo funcional inclui:
+- Autenticação e cadastro de usuários
+- Gestão de perfil do usuário
+- Criação, consulta, filtragem e acompanhamento de tickets
+- Assunção e fechamento de tickets por atendentes e administradores
+- Comentários em tickets permitidos
+- Upload, download, listagem e exclusão de anexos
+- Visualização de painéis e indicadores operacionais
+- Navegação entre áreas pública e autenticada
+
+---
+
+## 3. ATORES
+
+### 3.1 Visitante
+Pessoa não autenticada que pode acessar login e cadastro.
+
+### 3.2 Solicitante
+Usuário que abre tickets, acompanha seus chamados e interage com o atendimento quando permitido.
+
+### 3.3 Atendente
+Usuário responsável por assumir tickets, trabalhar nas demandas e concluí-las.
+
+### 3.4 Administrador
+Usuário com acesso ampliado, capaz de visualizar e operar todas as áreas previstas para os demais perfis.
+
+---
+
+## 4. OBJETIVOS DE NEGÓCIO
+
+- Reduzir o tempo entre a abertura e a resolução de chamados.
+- Permitir rastreabilidade das interações em cada ticket.
+- Garantir que cada usuário veja apenas os dados aos quais tem direito.
+- Centralizar o histórico de atendimento em tickets, comentários e anexos.
+- Oferecer uma interface clara para abertura e acompanhamento de solicitações.
+
+---
+
+## 5. CONCEITOS PRINCIPAIS
+
+### 5.1 Usuário
+Pessoa cadastrada no sistema com um perfil de acesso definido.
+
+### 5.2 Ticket
+Registro de uma solicitação de suporte, com título, descrição, categoria, prioridade, status e responsáveis.
+
+### 5.3 Comentário
+Mensagem vinculada a um ticket, usada para registrar comunicação entre as partes autorizadas.
+
+### 5.4 Anexo
+Arquivo associado a um ticket para complementar a solicitação ou evidenciar um problema.
+
+### 5.5 Dashboard
+Área que exibe indicadores e gráficos resumindo o volume e a distribuição de tickets.
+
+---
+
+## 6. REGRAS DE NEGÓCIO GERAIS
+
+- Todo usuário deve estar autenticado para acessar a área protegida.
+- O perfil do usuário determina quais ações ele pode executar.
+- Tickets possuem ciclo de vida com estados abertos, em andamento, resolvidos ou cancelados.
+- Um ticket só pode ser assumido por atendente ou administrador.
+- Um ticket fechado não volta para estado aberto.
+- Comentários dependem de permissão no ticket.
+- Anexos dependem de permissão no ticket.
+- Dados sensíveis, como senha, nunca podem ser expostos ao usuário.
+- Usuários inativos não devem acessar a operação normal do sistema.
+- O sistema deve preservar histórico suficiente para auditoria operacional.
+
+---
+
+## 7. REQUISITOS FUNCIONAIS
+
+### 7.1 Autenticação e cadastro
+
+**RF-01** O sistema deve permitir que um visitante se cadastre.
+
+**RF-02** O sistema deve permitir que um usuário autenticado entre com email e senha válidos.
+
+**RF-03** O sistema deve bloquear login com credenciais inválidas.
+
+**RF-04** O sistema deve impedir acesso à área autenticada sem sessão válida.
+
+**RF-05** O sistema deve permitir encerramento de sessão pelo usuário autenticado.
+
+**RF-06** O sistema deve manter o usuário autenticado enquanto a sessão for válida.
+
+### 7.2 Gestão de usuário
+
+**RF-07** O sistema deve permitir ao usuário visualizar seus próprios dados cadastrais.
+
+**RF-08** O sistema deve permitir ao usuário atualizar seus dados permitidos.
+
+**RF-09** O sistema deve permitir que um administrador desative usuários.
+
+**RF-10** O sistema deve impedir alteração de campos que o negócio define como imutáveis.
+
+**RF-11** O sistema deve permitir consulta de usuários conforme permissões do perfil.
+
+### 7.3 Gestão de tickets
+
+**RF-12** O sistema deve permitir que um solicitante crie um ticket.
+
+**RF-13** O sistema deve definir status inicial do ticket como aberto.
+
+**RF-14** O sistema deve permitir listar tickets conforme o perfil e a permissão do usuário.
+
+**RF-15** O sistema deve permitir consulta detalhada de um ticket.
+
+**RF-16** O sistema deve permitir filtragem de tickets por status, prioridade e responsável quando aplicável.
+
+**RF-17** O sistema deve permitir que um atendente ou administrador assuma um ticket aberto.
+
+**RF-18** O sistema deve permitir que o responsável ou administrador feche um ticket em andamento.
+
+**RF-19** O sistema deve impedir reabertura de tickets finalizados.
+
+**RF-20** O sistema deve exibir informações de requester e responsible nas telas de ticket.
+
+### 7.4 Comentários
+
+**RF-21** O sistema deve permitir criação de comentários em tickets permitidos.
+
+**RF-22** O sistema deve listar comentários de um ticket em ordem cronológica.
+
+**RF-23** O sistema deve impedir comentários em tickets cancelados ou em situações não permitidas pelo negócio.
+
+**RF-24** O sistema deve vincular cada comentário ao autor correspondente.
+
+### 7.5 Anexos
+
+**RF-25** O sistema deve permitir upload de anexos em tickets permitidos.
+
+**RF-26** O sistema deve permitir listar anexos de um ticket.
+
+**RF-27** O sistema deve permitir download de anexos autorizados.
+
+**RF-28** O sistema deve permitir exclusão de anexos quando o usuário tiver permissão.
+
+**RF-29** O sistema deve impedir upload de arquivos vazios, grandes demais ou em formato não suportado.
+
+### 7.6 Dashboard e indicadores
+
+**RF-30** O sistema deve exibir resumo de tickets em painel visual.
+
+**RF-31** O sistema deve exibir indicadores por status, prioridade e período.
+
+**RF-32** O sistema deve mostrar dados resumidos do próprio usuário, quando aplicável.
+
+### 7.7 Navegação e interface
+
+**RF-33** O sistema deve disponibilizar área pública para login e cadastro.
+
+**RF-34** O sistema deve disponibilizar área autenticada com navegação lateral ou equivalente.
+
+**RF-35** O sistema deve adaptar a interface para uso em dispositivos móveis.
+
+**RF-36** O sistema deve apresentar feedback visual para sucesso, erro, alerta e confirmação.
+
+**RF-37** O sistema deve apresentar estados vazios quando não houver dados.
+
+---
+
+## 8. FLUXOS FUNCIONAIS PRINCIPAIS
+
+### 8.1 Fluxo de cadastro e login
+1. O visitante acessa o cadastro ou o login.
+2. O sistema valida os dados informados.
+3. O usuário cria a conta ou entra no sistema.
+4. O sistema direciona o usuário para a área autenticada.
+
+### 8.2 Fluxo de abertura de ticket
+1. O solicitante acessa a área de tickets ou o perfil.
+2. O usuário preenche título, descrição, categoria e prioridade.
+3. O sistema cria o ticket como aberto.
+4. O ticket passa a aparecer nas listagens autorizadas.
+
+### 8.3 Fluxo de atendimento
+1. O atendente visualiza tickets disponíveis.
+2. O atendente assume um ticket aberto.
+3. O ticket muda para em andamento.
+4. O atendente comenta, consulta anexos e finaliza a demanda.
+
+### 8.4 Fluxo de resolução
+1. O responsável acessa o ticket em andamento.
+2. O responsável define o encerramento como resolvido ou cancelado.
+3. O sistema grava a data de fechamento.
+4. O ticket deixa de aceitar novas transições.
+
+### 8.5 Fluxo de interação no ticket
+1. Usuários autorizados visualizam comentários e anexos.
+2. Usuários autorizados adicionam comentários e arquivos.
+3. O sistema mantém o histórico da interação associado ao ticket.
+
+---
+
+## 9. PERMISSÕES POR PERFIL
+
+### 9.1 Solicitante
+- Criar tickets
+- Visualizar seus próprios tickets
+- Comentar em tickets permitidos
+- Anexar e baixar arquivos em tickets permitidos
+- Visualizar seu próprio perfil
+
+### 9.2 Atendente
+- Visualizar tickets autorizados pelo escopo de atendimento
+- Assumir tickets abertos
+- Comentar em tickets permitidos
+- Fechar tickets sob sua responsabilidade
+- Consultar painel operacional
+
+### 9.3 Administrador
+- Executar todas as ações do solicitante e do atendente
+- Visualizar e gerenciar usuários conforme a regra do sistema
+- Desativar usuários
+- Acessar dados operacionais e indicadores globais
+
+---
+
+## 10. REGRAS DE VISIBILIDADE
+
+- O solicitante só deve enxergar tickets aos quais tem acesso.
+- O atendente só deve operar tickets dentro de sua autorização.
+- O administrador pode visualizar todo o escopo operacional.
+- Comentários e anexos seguem a mesma regra de visibilidade do ticket.
+- Telas públicas nunca devem expor dados privados.
+
+---
+
+## 11. REQUISITOS DE DADOS
+
+- Todo usuário deve possuir identificador único.
+- Todo ticket deve possuir identificador único.
+- Todo comentário deve estar vinculado a um ticket e a um autor.
+- Todo anexo deve estar vinculado a um ticket.
+- Todo ticket deve registrar datas relevantes de criação, atualização e fechamento quando aplicável.
+- Todo histórico de interação deve permanecer preservado para consulta autorizada.
+
+---
+
+## 12. ERROS E RESPOSTAS FUNCIONAIS
+
+- Credenciais inválidas devem resultar em mensagem de autenticação falhou.
+- Acesso sem permissão deve resultar em bloqueio da ação e orientação ao usuário.
+- Recurso não encontrado deve ser apresentado de forma clara.
+- Validação inválida deve impedir a operação e destacar os campos afetados.
+- Falhas de rede devem permitir nova tentativa sem perda desnecessária de contexto.
+- Arquivo inválido deve ser rejeitado antes ou durante o envio.
+
+---
+
+## 13. CENÁRIOS DE USO
+
+### 13.1 Usuário se cadastra e entra no sistema
+- Um visitante cria uma conta.
+- O sistema valida os dados.
+- O usuário autentica-se e entra na área protegida.
+
+### 13.2 Solicitante abre e acompanha um ticket
+- O solicitante cria um ticket.
+- O ticket fica disponível em sua listagem.
+- O solicitante acompanha comentários, anexos e status.
+
+### 13.3 Atendente assume e resolve um ticket
+- O atendente encontra um ticket aberto.
+- O atendente assume o ticket.
+- O atendente adiciona comentários, consulta anexos e encerra o chamado.
+
+### 13.4 Usuário gerencia informações do perfil
+- O usuário acessa seus dados.
+- O usuário atualiza informações permitidas.
+- O sistema persiste as alterações e atualiza a interface.
+
+---
+
+## 14. CRITÉRIOS DE ACEITAÇÃO FUNCIONAL
+
+- Um usuário deve conseguir se cadastrar, autenticar e sair do sistema.
+- Um solicitante deve conseguir abrir tickets e acompanhá-los.
+- Um atendente deve conseguir assumir, trabalhar e encerrar tickets.
+- Comentários e anexos devem funcionar apenas quando houver permissão.
+- O dashboard deve exibir indicadores coerentes com os dados do sistema.
+- A navegação deve refletir o perfil do usuário e não expor áreas indevidas.
+- A experiência deve ser consistente entre desktop e mobile.
+
+---
+
+## 15. CONCLUSÃO
+
+Esta especificação funcional descreve o que o sistema HelpDesk deve entregar para o negócio, sem amarrar a implementação a qualquer tecnologia específica. Ela consolida os principais fluxos, permissões, regras de visibilidade e comportamentos esperados para usuários, tickets, comentários, anexos e indicadores.
+
+---

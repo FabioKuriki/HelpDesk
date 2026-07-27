@@ -1,0 +1,122 @@
+#header{
+    background-color: #0e2645;
+    color: white;
+    padding-inline: 2vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#header_buttons{
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+}
+
+.section_ticket_information{
+    padding: 24px;
+    display: flex;
+    align-items: start;
+    gap: 10vw;
+}
+
+.section_ticket_information_1{
+    display: flex;
+    flex-direction: column;
+    gap: 5vh;
+    width: 60%;
+}
+
+.section_ticket_information_2{
+    display: flex;
+    flex-direction: column;
+    gap: 4vh;
+}
+
+.card_big{
+    width: 100%;
+}
+
+.card_small{
+    width: 100%;
+}
+
+.card_content{
+    padding-inline: 1vw;
+    padding-block: 1vh;
+}
+
+#card_content_separator{
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 4vw;
+}
+
+#card_comment{
+    height: 50vh;
+}
+
+#card_comment_box{
+    background-color: #edeaea;
+    height: 60%;
+    width: 100%;
+    overflow-y: scroll;
+    border: 0.5px solid rgb(205, 205, 205);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+    padding-block: 1vh;
+}
+
+#card_comment_box_user{
+    padding-inline: 1vw;
+    display: flex;
+    gap: 1vw;
+}
+
+#card_comment_box_user_message{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+#card_comment_box_user_message_header{
+    display: flex;
+    justify-content: space-between;
+}
+
+#card_people_users{
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+    height: 100%;
+}
+
+.card_people_data_all{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2vw;
+}
+
+.card_people_data{
+    display: flex;
+    flex-direction: column;
+}
+
+img{
+    width: 5vw;
+}
+
+#comment_input_section{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+app-input{
+    width: 80%;
+}

@@ -1,0 +1,54 @@
+#container{
+    width: 100%;
+}
+
+.drop_zone {
+    border: 2px dashed #999;
+    padding: 30px;
+    text-align: center;
+    border-radius: 8px;
+    transition: .2s;
+}
+
+.drop_zone.dragging {
+    border-color: #1976d2;
+    background-color: #e3f2fd;
+}
+
+.drop_zone div{
+    display: flex;
+    justify-content: center;
+}
+
+app-button{
+    width: 50%;
+}
+
+.attachment_item{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.attachment_item_name_size{
+    display: flex;
+    gap: 1vw;
+}
+
+.attachment_item_buttons{
+    display: flex;
+    gap: 1vw;
+}
+
+img{
+    width: 50%;
+}
+
+.preview div{
+    display: flex;
+    justify-content: center;
+}
+
+.preview app-button{
+    width: 50%;
+}

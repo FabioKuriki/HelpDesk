@@ -1,0 +1,100 @@
+<mat-sidenav-container autosize>
+  <mat-sidenav
+    [mode]="isMobile() ? 'over' : 'side'"
+    [fixedInViewport]="isMobile()"
+    opened
+    [class.expanded]="expanded()"
+  >
+  <div id="mat_sidenav_separated">
+    @if (myProfile == "ATENDENTE") {
+      <div>
+        @if(activatedExpand){
+          <div (click)="toggleExpanded()" class="sidebar_header">
+            <img id="logo_icon" src="logo-icon.png" alt="Logo">
+            <img id="logo_texto" src="logo-texto.png" alt="Logo">
+          </div>
+          <mat-nav-list>
+            <a routerLink="dashboard" routerLinkActive="active" mat-list-item>
+              <div>
+                <img src="dashboard-icon.png" alt="Dashboard">
+                <span>Dashboard</span>
+              </div>
+            </a>
+            <a routerLink="tickets" routerLinkActive="active" mat-list-item>
+              <div>
+                <img src="ticket-icon.png" alt="Tickets">
+                <span>Tickets</span>
+              </div>
+            </a>
+            <a routerLink="profile" routerLinkActive="active" mat-list-item>
+              <div>
+                <img src="perfil-icon.png" alt="Perfil">
+                <span>Perfil</span>
+              </div>
+            </a>
+          </mat-nav-list>
+          
+        }
+        @else{
+          <div (click)="toggleExpanded()" class="sidebar_header">
+            <img id="logo_icon" src="logo-icon.png" alt="Logo">
+          </div>
+          <mat-nav-list>
+            <a routerLink="dashboard" routerLinkActive="active" mat-list-item><img src="dashboard-icon.png" alt="Dashboard"></a>
+            <a routerLink="tickets" routerLinkActive="active" mat-list-item><img src="ticket-icon.png" alt="Tickets"></a>
+            <a routerLink="profile" routerLinkActive="active" mat-list-item><img src="perfil-icon.png" alt="Perfil"></a>
+          </mat-nav-list>
+          
+        }
+      </div>
+    }
+
+    @if (myProfile == "SOLICITANTE") {
+      <div>
+        @if(activatedExpand){
+          <div (click)="toggleExpanded()" class="sidebar_header">
+            <img id="logo_icon" src="logo-icon.png" alt="Logo">
+            <img id="logo_texto" src="logo-texto.png" alt="Logo">
+          </div>
+          <mat-nav-list>
+            <a routerLink="profile" routerLinkActive="active" mat-list-item>
+              <div>
+                <img src="perfil-icon.png" alt="Perfil">
+                <span>Perfil</span>
+              </div>
+            </a>
+          </mat-nav-list>
+          
+        }
+        @else{
+          <div (click)="toggleExpanded()" class="sidebar_header">
+            <img id="logo_icon" src="logo-icon.png" alt="Logo">
+          </div>
+          <mat-nav-list>
+            <a routerLink="profile" routerLinkActive="active" mat-list-item><img src="perfil-icon.png" alt="Perfil"></a>
+          </mat-nav-list>
+        }
+      </div>
+    }
+
+    <div>
+      @if(activatedExpand){
+        <div (click)="userService.logout()" class="sidebar_footer">
+            <img src="sair-icon.png" alt="Icone de Sair">
+            <span>Sair</span>
+        </div>
+      }
+      @else{
+        <div (click)="userService.logout()" class="sidebar_footer">
+          <img src="sair-icon.png" alt="Icone de Sair">
+        </div>
+      }
+    </div>
+  </div>
+
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <router-outlet/>
+  </mat-sidenav-content>
+</mat-sidenav-container>

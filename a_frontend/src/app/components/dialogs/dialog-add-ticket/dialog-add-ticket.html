@@ -1,0 +1,14 @@
+<app-dialog-template title="Novo Ticket">
+    <form dialog-content [formGroup]="createTicketForm">
+        <div class="input_section">
+            <app-input [control]="createTicketForm.controls.title" placeholder="Título"/>
+            <app-input-select [control]="createTicketForm.controls.priority" [items]="priorities" placeholder="Prioridade"/>
+            <app-input-select [control]="createTicketForm.controls.category" [items]="categories" placeholder="Categoria"/>
+        </div><br>
+        <app-input-text-area [control]="createTicketForm.controls.description" placeholder="Descrição"/>
+    </form>
+    <div dialog-actions>
+        <button matButton mat-dialog-close>Cancelar</button>
+        <button (click)="useCreateTicket(createTicketForm.getRawValue())" matButton mat-dialog-close cdkFocusInitial>Criar</button>
+    </div>
+</app-dialog-template>

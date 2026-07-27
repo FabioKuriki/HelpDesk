@@ -1,0 +1,44 @@
+#profile_container{
+    padding: 24px;
+    padding-bottom: 40px;
+}
+
+#profile_content, #profile_content_user, #profile_content_button{
+    display: flex;
+    align-items: center;
+    gap: 2vw;
+}
+
+#profile_content{
+    justify-content: space-between;
+    padding-block: 2vh;
+    padding-inline: 2vw;
+    gap: 2vw;
+}
+
+#profile_content_button{
+    flex-direction: column;
+}
+
+
+#created_at{
+    background-color: rgb(213, 213, 213);
+}
+
+#all_card_status{
+    display: flex;
+    justify-content: space-between;
+}
+
+#title_and_filter{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 2vh;
+}
+
+#button_and_filter{
+    display: flex;
+    align-items: center;
+    gap: 5vw;
+}

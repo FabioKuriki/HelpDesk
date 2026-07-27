@@ -1,0 +1,15 @@
+#kpi{
+    border-top: 6px solid rgb(59, 34, 187);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20vw;
+    padding-block: 2vh;
+    gap: 2vw;
+}
+
+#icon{
+    border-radius: 100%;
+    padding: 4%;
+}

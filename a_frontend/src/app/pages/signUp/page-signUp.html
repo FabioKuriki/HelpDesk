@@ -1,0 +1,41 @@
+<section>
+    <div id="left_side">
+        <div id="left_side_content">
+            <h1>Cadastrar</h1>
+            <p>Cadastre-se e acompanhe suas solicitações<p>
+            
+            <form [formGroup]="singUpForm" (ngSubmit)="useSignUp(singUpForm.getRawValue())">
+                <app-input [control]="singUpForm.controls.name" placeholder="Nome"/><br><br>
+                <app-input [control]="singUpForm.controls.email" type="email" placeholder="E-mail"/><br><br>
+                <app-input [control]="singUpForm.controls.password" type="password" placeholder="Senha"/><br><br>
+                <div class="centered_div">
+                    <app-button type="submit" text="Cadastrar"/>
+                </div>
+                <br>
+            </form>
+            
+            <hr/>
+
+            <p class="centered_text">Já possui uma conta? <a href="">Logar</a></p>
+        </div>
+    </div>
+    <div id="right_side">
+        <div id="right_side_content">
+            <img id="img_logo" src="logo.png" alt="">
+            <h1>Estamos aqui para ajudar</h1>
+            <p>Crie sua conta e acompanhe suas solicitações de forma rápida e prática</p>
+            <img id="img_login" src="login.png" alt="imagem de login">
+            <div id="kpi">
+                <div>
+                    <h2>{{countUsers}}</h2>
+                    Usuários Ativos
+                </div>
+                <div>
+                    <h2>{{countSolvedTickets}}</h2>
+                    Chamados Resolvidos
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+

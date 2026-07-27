@@ -1,0 +1,686 @@
+﻿# ESPECIFICAÇÃO TÉCNICA - HELPDESK BACKEND
+
+## 1. VISÃO GERAL DO SISTEMA
+
+### 1.1 Propósito
+Sistema de helpdesk backend para gerenciamento de tickets de suporte técnico, permitindo que usuários solicitem suporte e atendentes resolvam problemas através de uma plataforma colaborativa.
+
+### 1.2 Atores Principais
+- **SOLICITANTE**: Usuário que cria tickets de suporte
+- **ATENDENTE**: Profissional de suporte que assume e resolve tickets  
+- **ADMINISTRADOR**: Gerenciador do sistema com acesso total
+
+### 1.3 Entidades Principais
+- User (Usuário)
+- Ticket (Chamado de Suporte)
+- Comment (Comentário)
+- Attachment (Anexo)
+- Authentication (Autenticação JWT)
+
+---
+
+## 2. TIPOS E ENUMERAÇÕES
+
+### 2.1 UserProfile (Enum)
+
+SOLICITANTE    -> Cria e acompanha tickets
+
+ATENDENTE      -> Assume, trabalha e fecha tickets
+
+ADMINISTRADOR  -> Acesso total ao sistema
+
+
+### 2.2 TicketStatus (Enum)
+ABERTO         -> Novo ticket, aguardando atendimento
+
+EM_ANDAMENTO   -> Ticket assumido, sendo trabalhado
+
+RESOLVIDO      -> Ticket concluído com sucesso
+
+CANCELADO      -> Ticket cancelado
+
+### 2.3 TicketPriority (Enum)
+BAIXA          -> Problema não urgente
+
+MEDIA          -> Problema com impacto moderado
+
+ALTA           -> Problema crítico que bloqueia trabalho
+
+URGENTE        -> Problema crítico que exige ação imediata
+
+### 2.4 TicketCategory (Enum)
+INCIDENTE     -> Problema inesperado que interrompe serviço
+
+SOLICITACAO   -> Pedido de serviço ou informação
+
+---
+
+## 3. USER (Usuário)
+
+### 3.1 Contrato: CreateUser (Criar Usuário)
+**Função**: Registrar novo usuário no sistema
+
+#### Pré-condições
+- Email deve ter formato válido (RFC 5322)
+- Email não deve existir no sistema (unicidade)
+- Senha deve ter mínimo 8 caracteres
+- Senha deve conter letras e números
+- Profile deve ser um dos valores válidos: SOLICITANTE, ATENDENTE, ADMINISTRADOR
+- Nenhum JWT token é necessário (operação pública)
+
+#### Pós-condições
+- Usuário criado com ID único (UUID)
+- Senha armazenada hasheada (nunca em plaintext)
+- Campo active = true por padrão
+- createdAt = timestamp atual
+- Retorna User com todos os campos exceto senha
+
+#### Invariantes
+- Email sempre único por usuário
+- Password sempre hasheada
+- Active nunca pode ser NULL
+- Profile imutável após criação
+- CreatedAt imutável
+
+#### Exceções
+- 400 Bad Request: Email já existe | Senha fraca | Email inválido | Profile inválido
+- 422 Unprocessable Entity: Validação de negócio falhou
+
+---
+
+### 3.2 Contrato: AuthenticateUser (Autenticar Usuário)
+**Função**: Autenticar e gerar JWT token
+
+#### Pré-condições
+- Email deve ser fornecido e válido
+- Senha deve ser fornecida (não vazia)
+- Usuário com email deve existir
+- Usuário deve estar ativo (active = true)
+
+#### Pós-condições
+- JWT token gerado com claims: sub (email), profile, exp (24h)
+- Token assinado com RSA-256
+- Retorna token e user profile
+
+#### Invariantes
+- JWT token sempre stateless
+- Token sempre válido por 24 horas
+- Claims sempre incluem email e profile
+
+#### Exceções
+- 401 Unauthorized: Email/senha inválidos | Usuário inativo
+- 400 Bad Request: Email ou senha não fornecidos
+
+---
+
+### 3.3 Contrato: UpdateUser (Atualizar Usuário)
+**Função**: Atualizar informações do usuário
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Usuário autenticado deve ser owner ou ADMINISTRADOR
+- ID do usuário deve existir e estar ativo
+- Se email informado: deve ser único (ou igual ao atual)
+- Se senha informada: deve ter mínimo 8 caracteres com letras/números
+- Campos imutáveis (id, createdAt, profile) não podem ser alterados
+
+#### Pós-condições
+- Usuário atualizado com novos valores
+- UpdatedAt = timestamp atual
+- Senha hasheada se alterada
+- Retorna user atualizado
+
+#### Invariantes
+- Email, profile, id, createdAt sempre imutáveis
+- Active nunca NULL
+- Password sempre hasheada
+
+#### Exceções
+- 401 Unauthorized: Token inválido ou expirado
+- 403 Forbidden: Sem permissão para atualizar este usuário
+- 404 Not Found: Usuário não encontrado
+- 400 Bad Request: Email duplicado | Senha fraca | Campos imutáveis alterados
+- 422 Unprocessable Entity: Validação falhou
+
+---
+
+### 3.4 Contrato: DeleteUser (Deletar Usuário - Soft Delete)
+**Função**: Desativar usuário (soft delete)
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Usuário autenticado deve ser ADMINISTRADOR
+- ID do usuário deve existir
+- Usuário não deve já estar inativo
+
+#### Pós-condições
+- Campo active = false
+- User não aparece em listagens normais
+- Dados preservados para auditoria
+- Retorna user com active = false
+
+#### Invariantes
+- Dados nunca permanentemente deletados
+- Active sempre reflete status
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Apenas admin pode deletar
+- 404 Not Found: Usuário não encontrado
+- 400 Bad Request: Usuário já inativo
+
+---
+
+### 3.5 Contrato: ListUsers (Listar Usuários)
+**Função**: Listar usuários com filtros e paginação
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Usuário autenticado deve ser ATENDENTE ou ADMINISTRADOR
+- Se filtro 'profile' fornecido: deve ser valor válido
+
+#### Pós-condições
+- Retorna lista paginada de usuários ativos
+- Cada user sem campo password
+- Total de registros incluído
+- Ordenação por createdAt DESC padrão
+
+#### Invariantes
+- Apenas users ativos (active = true) retornados
+- Passwords nunca retornadas
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Sem permissão
+- 400 Bad Request: Filtro inválido
+
+---
+
+## 4. TICKET (Chamado de Suporte)
+
+### 4.1 Contrato: CreateTicket (Criar Ticket)
+**Função**: Criar novo ticket de suporte
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Usuário autenticado deve ser SOLICITANTE ou ADMINISTRADOR
+- Title não vazio, máximo 255 caracteres
+- Description não vazia, máximo 5000 caracteres
+- Category deve ser valor válido
+- Priority deve ser valor válido
+- Responsible não pode ser fornecido (será NULL inicialmente)
+
+#### Pós-condições
+- Ticket criado com ID único (UUID)
+- Status = ABERTO
+- Requester = usuário autenticado
+- Responsible = NULL (ninguém assumiu ainda)
+- CreatedAt = timestamp atual
+- UpdatedAt = timestamp atual
+- ClosedAt = NULL
+
+#### Invariantes
+- Status sempre iniciado como ABERTO
+- Requester nunca pode mudar
+- Responsible sempre NULL até ser assumido
+- Title e description sempre preenchidos
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 400 Bad Request: Title/description vazios | Category inválida | Priority inválida
+- 422 Unprocessable Entity: Validação falhou
+
+---
+
+### 4.2 Contrato: TakeTicket (Assumir Ticket)
+**Função**: Atendente assume ticket para trabalhar
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Usuário autenticado deve ser ATENDENTE ou ADMINISTRADOR
+- Ticket ID deve existir
+- Ticket status deve ser ABERTO
+- Responsible deve estar NULL ou ser o próprio usuário
+
+#### Pós-condições
+- Responsible = usuário autenticado
+- Status = EM_ANDAMENTO
+- UpdatedAt = timestamp atual
+- Retorna ticket atualizado
+
+#### Invariantes
+- Apenas tickets ABERTO podem ser assumidos
+- Responsible nunca pode ser SOLICITANTE
+- Um ATENDENTE pode reassumir seu próprio ticket
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Não é ATENDENTE/ADMIN
+- 404 Not Found: Ticket não encontrado
+- 400 Bad Request: Ticket já assumido por outro | Status não é ABERTO
+
+---
+
+### 4.3 Contrato: CloseTicket (Fechar Ticket)
+**Função**: Encerrar ticket (RESOLVIDO ou CANCELADO)
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Usuário autenticado deve ser responsible do ticket ou ADMINISTRADOR
+- Ticket ID deve existir
+- Ticket status deve ser EM_ANDAMENTO
+- Responsible não pode ser NULL (ticket deve ter sido assumido)
+- CloseReason deve ser fornecido: RESOLVIDO ou CANCELADO
+
+#### Pós-condições
+- Status = RESOLVIDO ou CANCELADO (conforme closeReason)
+- ClosedAt = timestamp atual
+- UpdatedAt = timestamp atual
+- Retorna ticket fechado
+
+#### Invariantes
+- Tickets não podem ser reabertor (estados terminais)
+- Apenas tickets EM_ANDAMENTO podem ser fechados
+- Responsible deve estar preenchido
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Não é responsible ou admin
+- 404 Not Found: Ticket não encontrado
+- 400 Bad Request: Status não é EM_ANDAMENTO | Responsible NULL | closeReason inválido
+
+---
+
+### 4.4 Contrato: GetTicketById (Obter Ticket por ID)
+**Função**: Recuperar detalhes de um ticket
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Ticket ID deve existir
+- Usuário deve ter permissão de leitura:
+  - SOLICITANTE: apenas seus próprios tickets
+  - ATENDENTE: apenas tickets que é responsible ou criou
+  - ADMIN: qualquer ticket
+
+#### Pós-condições
+- Retorna ticket com todos os dados
+- Inclui requester e responsible users
+- Inclui count de comments
+- Inclui count de attachments
+
+#### Invariantes
+- Tickets deletados logicamente nunca retornados
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Sem permissão de leitura
+- 404 Not Found: Ticket não encontrado
+
+---
+
+### 4.5 Contrato: ListTickets (Listar Tickets)
+**Função**: Listar tickets com filtros e paginação
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Se filtro 'status' fornecido: deve ser valor válido
+- Se filtro 'priority' fornecido: deve ser valor válido
+- Se filtro 'responsible' fornecido: deve ser UUID válido
+- Usuário SOLICITANTE: pode filtrar apenas seus tickets
+- Usuário ATENDENTE: pode filtrar seus tickets ou que é responsible
+- Usuário ADMIN: pode filtrar todos
+
+#### Pós-condições
+- Retorna lista paginada de tickets
+- Aplicados filtros solicitados
+- Ordenação por updatedAt DESC padrão
+- Cada ticket inclui requester e responsible info
+
+#### Invariantes
+- Paginação obrigatória (padrão: page=1, limit=20)
+- Apenas tickets visíveis conforme permissão
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Sem permissão de leitura
+- 400 Bad Request: Status/priority inválido | Página inválida
+
+---
+
+## 5. COMMENT (Comentário)
+
+### 5.1 Contrato: CreateComment (Criar Comentário)
+**Função**: Adicionar comentário a um ticket
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Ticket ID deve existir
+- Usuário deve ter permissão no ticket:
+  - Criador do ticket, ou
+  - É o responsible, ou
+  - ADMINISTRADOR
+- Text não vazio, máximo 5000 caracteres
+- Ticket status não deve ser CANCELADO (mas pode ser RESOLVIDO)
+
+#### Pós-condições
+- Comment criado com ID único
+- Author = usuário autenticado
+- Ticket = ticket fornecido
+- CreatedAt = timestamp atual
+- Retorna comment criado
+
+#### Invariantes
+- Author imutável após criação
+- Ticket imutável
+- Text imutável (sem edição)
+- Comments criados apenas em tickets existentes
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Sem permissão no ticket
+- 404 Not Found: Ticket não encontrado
+- 400 Bad Request: Text vazio | Ticket cancelado
+- 422 Unprocessable Entity: Validação falhou
+
+---
+
+### 5.2 Contrato: ListComments (Listar Comentários)
+**Função**: Obter comentários de um ticket
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Ticket ID deve existir
+- Usuário deve ter permissão de leitura no ticket
+
+#### Pós-condições
+- Retorna lista paginada de comments
+- Ordenação por createdAt ASC (mais antigos primeiro)
+- Cada comment inclui author info
+- Total de comentários
+
+#### Invariantes
+- Apenas users com permissão no ticket veem comentários
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Sem permissão
+- 404 Not Found: Ticket não encontrado
+
+---
+
+## 6. ATTACHMENT (Anexo)
+
+### 6.1 Contrato: UploadAttachment (Fazer Upload de Anexo)
+**Função**: Anexar arquivo a um ticket
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Ticket ID deve existir
+- Usuário deve ter permissão:
+  - Criador do ticket, ou
+  - É o responsible, ou
+  - ADMINISTRADOR
+- Arquivo não vazio
+- Arquivo máximo 10MB
+- Content-Type deve ser suportado (PDF, DOC, JPG, PNG, etc.)
+
+#### Pós-condições
+- Arquivo salvo no filesystem
+- Metadados salvos no banco de dados
+- Attachment criado com ID único
+- FileName = nome original
+- FileSize = tamanho do arquivo
+- ContentType = MIME type
+- CreatedAt = timestamp atual
+- Retorna attachment info
+
+#### Invariantes
+- File sempre armazenado no filesystem
+- Metadata sempre em banco de dados
+- Attachment vinculado apenas a um ticket
+- FileSize nunca alterado
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Sem permissão no ticket
+- 404 Not Found: Ticket não encontrado
+- 400 Bad Request: Arquivo vazio | Arquivo muito grande | Tipo não suportado
+- 507 Insufficient Storage: Sem espaço em disco
+
+---
+
+### 6.2 Contrato: DownloadAttachment (Baixar Anexo)
+**Função**: Download do arquivo anexado
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Attachment ID deve existir
+- Usuário deve ter permissão:
+  - Criador do ticket, ou
+  - É o responsible do ticket, ou
+  - ADMINISTRADOR
+
+#### Pós-condições
+- Arquivo retornado em stream binário
+- Content-Type correto definido
+- Content-Disposition com nome original
+
+#### Invariantes
+- Arquivo não alterado durante download
+- Acesso registrado para auditoria
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Sem permissão
+- 404 Not Found: Attachment não encontrado
+- 500 Internal Server Error: Arquivo não encontrado no disco
+
+---
+
+### 6.3 Contrato: DeleteAttachment (Deletar Anexo)
+**Função**: Remover anexo de um ticket
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Attachment ID deve existir
+- Usuário deve ter permissão:
+  - Criador do attachment, ou
+  - ADMINISTRADOR
+- Arquivo deve existir no filesystem
+
+#### Pós-condições
+- Arquivo removido do filesystem
+- Registro deletado do banco
+- Retorna confirmação
+
+#### Invariantes
+- Exclusão física de arquivo e registro
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Sem permissão
+- 404 Not Found: Attachment não encontrado
+- 500 Internal Server Error: Erro ao deletar arquivo
+
+---
+
+### 6.4 Contrato: ListAttachments (Listar Anexos)
+**Função**: Obter attachments de um ticket
+
+#### Pré-condições
+- JWT token válido obrigatório
+- Ticket ID deve existir
+- Usuário deve ter permissão de leitura no ticket
+
+#### Pós-condições
+- Retorna lista de attachments
+- Inclui: id, fileName, fileSize, contentType, createdAt
+- Ordenação por createdAt DESC
+
+#### Invariantes
+- Apenas users com permissão veem lista
+
+#### Exceções
+- 401 Unauthorized: Token inválido
+- 403 Forbidden: Sem permissão
+- 404 Not Found: Ticket não encontrado
+
+---
+
+## 7. AUTENTICAÇÃO E AUTORIZAÇÃO
+
+### 7.1 JWT Token
+- **Algoritmo**: RSA-256
+- **Validade**: 24 horas
+- **Claims obrigatórios**:
+  - \sub\: email do usuário
+  - \profile\: SOLICITANTE | ATENDENTE | ADMINISTRADOR
+  - \iat\: timestamp de emissão
+  - \exp\: timestamp de expiração
+- **Stateless**: Não há armazenamento de sessões
+- **Assinado**: Com chave privada RSA
+
+### 7.2 Fluxo de Autenticação
+1. Usuário envia email e senha em POST /users/login
+2. Sistema valida credenciais
+3. Se válido: gera JWT com RSA-256
+4. Cliente armazena token (localStorage/sessionStorage)
+5. Requisições subsequentes enviam token em Authorization: Bearer {token}
+6. Sistema valida assinatura e validade antes de processar
+
+---
+
+## 8. REGRAS DE NEGÓCIO
+
+### 8.1 Ciclo de Vida de Ticket
+1. **ABERTO**: Ticket criado, aguardando atendente
+2. **EM_ANDAMENTO**: Atendente assumiu (responsible != NULL)
+3. **RESOLVIDO** ou **CANCELADO**: Terminal (não pode voltar)
+
+### 8.2 Condições de Transição
+- ABERTO → EM_ANDAMENTO: Apenas se Responsible NULL + ATENDENTE/ADMIN
+- EM_ANDAMENTO → RESOLVIDO/CANCELADO: Apenas se Responsible = usuário ou ADMIN
+- Nunca → ABERTO: Estados terminais são finais
+- Apenas uma transição por vez: Não há pulo de estado
+
+### 8.3 Regras de Comentário
+- Podem ser criados em tickets ABERTO ou EM_ANDAMENTO
+- NÃO podem ser criados em tickets RESOLVIDO ou CANCELADO
+- São imutáveis (sem edição)
+- Apenas users com permissão no ticket veem
+
+### 8.4 Regras de Attachment
+- Máximo 10MB por arquivo
+- Tipos suportados: PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG, ZIP
+- Armazenado no filesystem, metadata no banco
+- Vinculado a ticket, não a comment
+- Soft delete não recomendado: deletar permanentemente
+
+### 8.5 Garantias de Dados
+- Email deve ser único por usuário (constraint de banco)
+- Passwords sempre hasheadas (nunca plaintext)
+- Soft delete para usuários (active flag)
+- Audit trail: createdAt, updatedAt, closedAt sempre preenchidos
+- UUIDs para IDs primários (distribuído, sequência não importa)
+
+---
+
+## 9. VALIDAÇÕES E RESTRIÇÕES
+
+### 9.1 Validações de Email
+- Formato: RFC 5322 (standard email)
+- Exemplo válido: usuario@empresa.com.br
+- Máximo 255 caracteres
+- Unique: Não pode repetir no banco
+
+### 9.2 Validações de Senha
+- Mínimo 8 caracteres
+- Máximo 128 caracteres
+- Deve conter letras (A-Z, a-z)
+- Deve conter números (0-9)
+- Opcionalmente: caracteres especiais recomendados
+- Nunca armazenada em plaintext (hash bcrypt ou similar)
+
+### 9.3 Validações de Strings
+- Title (Ticket): 1-255 caracteres
+- Description (Ticket): 1-5000 caracteres
+- Text (Comment): 1-5000 caracteres
+- FileName (Attachment): 1-255 caracteres
+
+### 9.4 Validações de Arquivo
+- Tamanho: mínimo 1 byte, máximo 10MB
+- Content-Type: MIME type válido
+- FileName: sem caracteres especiais perigosos (/, \\, null bytes)
+
+---
+
+## 10. MATRIX DE ERROS
+
+| HTTP | Código | Cenário |
+|------|--------|---------|
+| 400 | BAD_REQUEST | Email inválido, senha fraca, campo vazio, validação falhou |
+| 401 | UNAUTHORIZED | Token inválido, expirado ou não fornecido |
+| 403 | FORBIDDEN | Sem permissão para operação |
+| 404 | NOT_FOUND | Recurso não encontrado |
+| 409 | CONFLICT | Email já existe, constraint violation |
+| 422 | UNPROCESSABLE_ENTITY | Lógica de negócio falhou |
+| 500 | INTERNAL_ERROR | Erro no servidor, arquivo em disco ausente, etc |
+| 507 | INSUFFICIENT_STORAGE | Sem espaço em disco para upload |
+
+---
+
+## 11. EXEMPLO DE FLUXO: Criar e Resolver um Ticket
+
+1. **Usuário SOLICITANTE se autentica**
+   - POST /users/login { email, password }
+   - Recebe JWT token
+
+2. **Cria um ticket**
+   - POST /tickets { title, description, category, priority }
+   - Ticket criado em status ABERTO, requester = solicitante
+
+3. **Atendente se autentica**
+   - POST /users/login { email, password }
+   - Recebe JWT token
+
+4. **Atendente vê tickets ABERTOS**
+   - GET /tickets?status=ABERTO
+   - Lista todos os tickets abertos
+
+5. **Atendente assume o ticket**
+   - GET /tickets/id/{ticketId}/take
+   - Ticket muda para EM_ANDAMENTO, responsible = atendente
+
+6. **Atendente comenta no ticket**
+   - POST /tickets/{ticketId}/comments { text }
+   - Comentário vinculado ao ticket
+
+7. **Solicitante faz upload de evidência**
+   - POST /tickets/{ticketId}/attachments { file }
+   - Arquivo armazenado, metadata em BD
+
+8. **Atendente baixa evidência**
+   - GET /attachments/{attachmentId}/download
+   - Arquivo retornado
+
+9. **Atendente fecha ticket como RESOLVIDO**
+   - GET /tickets/id/{ticketId}/close { resolution: RESOLVIDO }
+   - Ticket muda para RESOLVIDO, closedAt preenchido
+
+10. **Solicitante verifica ticket resolvido**
+    - GET /tickets/id/{ticketId}
+    - Vê todos os comentários e pode baixar anexos (mas não pode comentar)
+
+---
+
+## 12. CONCLUSÃO
+
+Esta especificação define todos os contratos de operação para o sistema HelpDesk de forma agnóstica a linguagem ou framework de implementação. Cada operação é documentada com:
+- Pré-condições: o que deve ser verdade antes
+- Pós-condições: o que é garantido após sucesso
+- Invariantes: o que nunca muda
+- Exceções: casos de erro com HTTP status
+
+O padrão Design by Contract permite que qualquer linguagem/framework (Java, Python, Node.js, Go, C#, etc.) implemente este contrato mantendo as mesmas garantias funcionais e de segurança.
+
+---

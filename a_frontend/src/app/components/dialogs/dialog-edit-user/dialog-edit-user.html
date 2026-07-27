@@ -1,0 +1,11 @@
+<app-dialog-template title="Editar Usuário">
+    <form dialog-content [formGroup]="editUserForm">
+        <app-input [control]="editUserForm.controls.name" placeholder="Nome"/>
+        <app-input [control]="editUserForm.controls.email" placeholder="E-mail"/>
+        <app-input [control]="editUserForm.controls.password" type="password" placeholder="Senha"/>
+    </form>
+    <div dialog-actions>
+        <button matButton mat-dialog-close>Cancelar</button>
+        <button (click)="getEditUser(editUserForm.getRawValue())" matButton mat-dialog-close cdkFocusInitial>Salvar</button>
+    </div>
+</app-dialog-template>
